@@ -1,0 +1,407 @@
+<!doctype html>
+<html lang="es">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Reclamaciones IA · ¿Te están cobrando de más?</title>
+<meta name="description" content="Sube tu factura de móvil o fibra y te decimos gratis si te están cobrando de más.">
+<meta name="robots" content="noindex">
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Bricolage+Grotesque:opsz,wght@12..96,600;12..96,700&family=Inter:wght@400;500;600&display=swap">
+<style>
+:root{
+  --bg:#F6F7F4; --card:#FFFFFF; --ink:#14201C; --ink2:#33403B; --muted:#55625D;
+  --line:#E1E5E1; --accent:#0F6B5C; --accent-dk:#0B5246; --accent-soft:#E3F2EE;
+  --warn-bg:#FFF7ED; --warn-line:#F5CBA7; --warn:#9A3412; --err:#B42318;
+}
+*{box-sizing:border-box}
+[hidden]{display:none!important}
+html{scroll-behavior:smooth}
+body{margin:0;background:var(--bg);color:var(--ink);font-family:Inter,system-ui,sans-serif;line-height:1.5;-webkit-font-smoothing:antialiased}
+a{color:var(--accent)}a:hover{color:var(--accent-dk)}
+h1,h2,.display{font-family:'Bricolage Grotesque',sans-serif;font-weight:700;line-height:1.08;margin:0}
+.wrap{max-width:1120px;margin:0 auto;padding:0 20px}
+.btn{display:inline-flex;align-items:center;justify-content:center;gap:8px;min-height:48px;padding:0 22px;border-radius:999px;border:0;background:var(--accent);color:#fff;font:inherit;font-weight:600;font-size:16px;text-decoration:none;cursor:pointer}
+.btn:hover{background:var(--accent-dk);color:#fff}
+.btn:disabled{opacity:.6;cursor:wait}
+.card{background:var(--card);border:1px solid var(--line);border-radius:18px}
+
+/* cabecera */
+header.top{background:var(--card);border-bottom:1px solid var(--line);position:sticky;top:0;z-index:5}
+header.top .wrap{display:flex;align-items:center;justify-content:space-between;gap:12px;padding-top:12px;padding-bottom:12px;flex-wrap:wrap}
+.logo{font-family:'Bricolage Grotesque',sans-serif;font-weight:700;font-size:21px}
+header nav{display:flex;align-items:center;gap:18px;flex-wrap:wrap}
+header nav a.plain{color:var(--ink2);text-decoration:none;font-size:15px}
+@media (max-width:560px){header nav a.plain{display:none}}
+
+/* hero */
+.hero{display:flex;flex-wrap:wrap;gap:44px;align-items:flex-start;padding-top:56px;padding-bottom:64px}
+.hero-text{flex:999 1 480px;min-width:0;display:flex;flex-direction:column;gap:20px}
+.pill{align-self:flex-start;font-size:13px;font-weight:600;padding:6px 12px;border-radius:999px;background:var(--accent-soft);color:var(--accent-dk)}
+.hero h1{font-size:clamp(2.2rem,5.5vw,3.4rem)}
+.lead{margin:0;font-size:clamp(1.05rem,2vw,1.2rem);color:var(--ink2)}
+.hero-side{flex:1 1 320px;min-width:0;display:flex;justify-content:center}
+
+/* formulario */
+form{display:flex;flex-direction:column;gap:14px;padding:20px;max-width:540px}
+.drop{display:flex;flex-direction:column;align-items:center;gap:6px;padding:20px;border-radius:14px;border:1.5px dashed var(--accent);color:var(--accent);text-align:center;cursor:pointer;background:#fff}
+.drop:hover,.drop.over{background:var(--accent-soft)}
+.drop:focus-within{outline:3px solid #9fd3c7;outline-offset:2px}
+.drop strong{font-size:15px}
+.drop small{font-size:13px;color:var(--muted)}
+.sr{position:absolute;width:1px;height:1px;overflow:hidden;clip:rect(0 0 0 0);white-space:nowrap}
+.files{list-style:none;margin:0;padding:0;display:flex;flex-direction:column;gap:6px}
+.files li{display:flex;align-items:center;justify-content:space-between;gap:10px;padding:8px 12px;border-radius:10px;background:var(--bg);font-size:14px}
+.files li span{overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
+.files button{border:0;background:none;color:var(--muted);font:inherit;font-size:13px;cursor:pointer;min-height:32px;padding:0 6px;text-decoration:underline}
+label.field{display:flex;flex-direction:column;gap:6px;font-size:14px;font-weight:500}
+.tip{margin:-4px 0 0;font-size:13px;color:var(--ink2);background:var(--accent-soft);padding:10px 12px;border-radius:10px}
+fieldset.choice{border:0;margin:0;padding:0;display:flex;flex-direction:column;gap:8px}
+fieldset.choice legend{font-size:14px;font-weight:500;padding:0;margin-bottom:8px}
+.opts{display:flex;flex-wrap:wrap;gap:8px}
+.opts label{display:flex;align-items:center;gap:8px;min-height:44px;padding:0 14px;border-radius:999px;border:1px solid #C9D0CB;background:#fff;font-size:15px;cursor:pointer}
+.opts label:has(input:checked){border-color:var(--accent);background:var(--accent-soft);color:var(--accent-dk);font-weight:600}
+.opts input{accent-color:var(--accent);width:18px;height:18px;margin:0}
+select,input[type=text]{width:100%;min-height:48px;padding:0 14px;border-radius:12px;border:1px solid #C9D0CB;background:var(--bg);font:inherit;font-size:16px;color:var(--ink)}
+select:focus,input[type=text]:focus{outline:3px solid #9fd3c7;outline-offset:1px;border-color:var(--accent)}
+input[type=email],textarea{width:100%;padding:12px 14px;border-radius:12px;border:1px solid #C9D0CB;background:var(--bg);font:inherit;font-size:16px;color:var(--ink)}
+textarea{min-height:76px;resize:vertical}
+input:focus,textarea:focus{outline:3px solid #9fd3c7;outline-offset:1px;border-color:var(--accent)}
+.check{display:flex;gap:10px;align-items:flex-start;font-size:13px;color:var(--ink2)}
+.check input{width:20px;height:20px;margin-top:1px;accent-color:var(--accent);flex-shrink:0}
+.hint{font-size:12px;color:var(--muted);text-align:center;margin:0}
+.error{margin:0;padding:10px 12px;border-radius:10px;background:#FEF3F2;color:var(--err);font-size:14px}
+.ok{display:flex;flex-direction:column;gap:12px;padding:28px;max-width:540px}
+.ok h2{font-size:1.8rem}
+.ok p{margin:0;color:var(--ink2)}
+
+/* ejemplo */
+.example{width:100%;max-width:360px;display:flex;flex-direction:column;gap:12px;padding:20px;border-radius:26px}
+.found{display:flex;flex-direction:column;gap:10px;padding:16px;border-radius:16px;background:var(--warn-bg);border:1px solid var(--warn-line)}
+.found b.t{color:var(--warn);font-size:14px}
+.nums{display:grid;grid-template-columns:repeat(2,minmax(0,1fr));gap:8px}
+.nums div{display:flex;flex-direction:column;padding:10px 12px;border-radius:12px;background:#fff}
+.nums small{font-size:12px;color:var(--muted)}
+.nums .display{font-size:22px}
+.row{display:flex;justify-content:space-between;align-items:center;padding:12px 14px;border-radius:14px;background:var(--bg);font-size:14px;font-weight:500}
+.tag{font-size:12px;font-weight:600;padding:4px 10px;border-radius:999px;background:var(--accent-soft);color:var(--accent-dk)}
+
+/* secciones */
+section.band{background:var(--card);border-top:1px solid var(--line);border-bottom:1px solid var(--line)}
+.sec{padding-top:60px;padding-bottom:60px;display:flex;flex-direction:column;gap:26px}
+.sec h2{font-size:clamp(1.7rem,3.5vw,2.2rem)}
+.grid{display:grid;grid-template-columns:repeat(auto-fit,minmax(240px,1fr));gap:18px}
+.step{display:flex;flex-direction:column;gap:10px;padding:24px;border-radius:18px;background:var(--bg)}
+.num{width:36px;height:36px;border-radius:50%;background:var(--accent);color:#fff;font-weight:700;display:flex;align-items:center;justify-content:center}
+.step h3{margin:0;font-size:1.12rem}
+.step p,.faq p{margin:0;font-size:15px;color:var(--ink2)}
+.item{display:flex;gap:12px;align-items:flex-start;padding:18px;font-size:15px}
+.price{display:flex;flex-direction:column;gap:12px;padding:28px;border-radius:20px}
+.price .display{font-size:3rem;line-height:1}
+.price.main{background:var(--accent);color:#fff}
+.price.main p{color:#E3F2EE}
+.price.alt{background:var(--bg);border:1px solid var(--line)}
+.price p{margin:0;font-size:15px}
+.faq{display:flex;flex-direction:column;gap:6px;padding:20px}
+.faq h3{margin:0;font-size:1.05rem}
+footer{background:var(--ink);color:#C9D0CB}
+footer .wrap{display:flex;flex-wrap:wrap;justify-content:space-between;gap:14px;padding-top:32px;padding-bottom:32px;font-size:14px}
+footer a{color:#C9D0CB}
+</style>
+</head>
+<body>
+
+<header class="top">
+  <div class="wrap">
+    <span class="logo">Reclamaciones IA</span>
+    <nav aria-label="Secciones">
+      <a class="plain" href="#como">Cómo funciona</a>
+      <a class="plain" href="#precio">Precio</a>
+      <a class="btn" href="#analizar" style="min-height:44px;font-size:15px">Analizar mi factura</a>
+    </nav>
+  </div>
+</header>
+
+<main>
+  <div class="wrap hero" id="analizar">
+    <div class="hero-text">
+      <span class="pill">Móvil, fibra y telefonía</span>
+      <h1>¿Tu factura ha subido sin que nadie te avise?</h1>
+      <p class="lead">Súbela y te decimos gratis si te están cobrando de más. Si hay caso, preparamos la reclamación contigo y te acompañamos hasta que la empresa responda.</p>
+
+      <form id="form" class="card" novalidate>
+        <label class="drop" id="drop" for="archivos">
+          <svg width="28" height="28" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M12 16V4M7 9l5-5 5 5"/><path d="M4 16v3a1 1 0 0 0 1 1h14a1 1 0 0 0 1-1v-3"/></svg>
+          <strong>Sube tus facturas completas</strong>
+          <small>La de antes de la subida y la actual · PDF con todas las páginas o fotos · máx. 10 MB cada una</small>
+          <input class="sr" id="archivos" type="file" multiple accept="image/*,application/pdf">
+        </label>
+        <ul class="files" id="lista" aria-live="polite"></ul>
+        <p class="tip">Consejo: el aviso de subida de precio suele ir en las páginas interiores de la factura. Si tienes el PDF, súbelo entero.</p>
+
+        <fieldset class="choice">
+          <legend>¿Reclamas como…?</legend>
+          <div class="opts">
+            <label><input type="radio" name="tipo" value="particular"> Particular</label>
+            <label><input type="radio" name="tipo" value="autonomo"> Autónomo</label>
+            <label><input type="radio" name="tipo" value="empresa"> Empresa</label>
+          </div>
+        </fieldset>
+
+        <label class="field">Tu compañía
+          <select id="operadora">
+            <option value="">Elige una</option>
+            <option>Movistar</option><option>Vodafone</option><option>Orange</option>
+            <option>Digi</option><option>MásMóvil / Yoigo</option><option>O2</option>
+            <option>Lowi</option><option>Pepephone</option><option>Simyo</option>
+            <option>Otra</option>
+          </select>
+        </label>
+
+        <fieldset class="choice">
+          <legend>¿Te avisaron del cambio antes de aplicarlo? <span style="font-weight:400;color:var(--muted)">(SMS, correo o carta)</span></legend>
+          <div class="opts">
+            <label><input type="radio" name="aviso" value="si"> Sí</label>
+            <label><input type="radio" name="aviso" value="no"> No</label>
+            <label><input type="radio" name="aviso" value="no_se"> No lo sé</label>
+          </div>
+        </fieldset>
+
+        <label class="field" id="campoFecha" hidden>¿Cuándo te avisaron, más o menos?
+          <input type="text" id="fechaAviso" maxlength="60" placeholder="Por ejemplo: a principios de julio">
+        </label>
+
+        <label class="field"><span>Tu nombre <span style="font-weight:400;color:var(--muted)">(opcional)</span></span>
+          <input type="text" id="nombre" maxlength="120" autocomplete="name">
+        </label>
+
+        <label class="field">Tu correo, para enviarte el resultado
+          <input type="email" id="email" autocomplete="email" placeholder="nombre@correo.com" required>
+        </label>
+
+        <label class="field"><span>¿Qué ha pasado? <span style="font-weight:400;color:var(--muted)">(opcional)</span></span>
+          <textarea id="comentario" maxlength="1000" placeholder="Por ejemplo: me han subido la cuota sin avisarme"></textarea>
+        </label>
+
+        <label class="check">
+          <input type="checkbox" id="acepto" required>
+          <span>Acepto que usen mis facturas solo para analizar mi caso, según la <a href="#privacidad">política de privacidad</a>.</span>
+        </label>
+
+        <p class="error" id="error" role="alert" hidden></p>
+
+        <button class="btn" type="submit" id="enviar">Analizar gratis</button>
+        <p class="hint">Sin registro. Te respondemos en menos de 24 horas.</p>
+      </form>
+
+      <div class="ok card" id="gracias" hidden tabindex="-1">
+        <span class="tag" style="align-self:flex-start">Recibido</span>
+        <h2>¡Gracias! Ya tenemos tus facturas.</h2>
+        <p>Las revisamos y te escribimos a <strong id="emailOk"></strong> en menos de 24 horas con el resultado: qué ha cambiado, cuánto pagas de más y si merece la pena reclamar.</p>
+        <button class="btn" type="button" id="otra" style="align-self:flex-start;background:#fff;color:var(--accent);border:1px solid var(--accent)">Enviar otra consulta</button>
+      </div>
+    </div>
+
+    <div class="hero-side">
+      <div class="example card" aria-label="Ejemplo de resultado">
+        <span style="font-size:13px;color:var(--muted)">Ejemplo de resultado</span>
+        <div class="found">
+          <b class="t">Hemos encontrado algo</b>
+          <span style="font-size:15px">«Cuota fibra + móvil» pasa de 42,90 € a <strong>60,90 €</strong> desde abril.</span>
+          <div class="nums">
+            <div><small>Al mes</small><span class="display">+18,00 €</span></div>
+            <div><small>Al año</small><span class="display">+216,00 €</span></div>
+          </div>
+        </div>
+        <div class="row">Valoración <span class="tag">Caso sólido</span></div>
+      </div>
+    </div>
+  </div>
+
+  <section class="band" id="como">
+    <div class="wrap sec">
+      <h2>Cómo funciona</h2>
+      <div class="grid">
+        <div class="step"><span class="num">1</span><h3>Subes tus facturas</h3><p>La anterior y la actual. Una foto con el móvil es suficiente.</p></div>
+        <div class="step"><span class="num">2</span><h3>Te decimos si hay caso</h3><p>Comparamos concepto por concepto y te explicamos qué ha cambiado, cuánto pagas de más y si merece la pena reclamar.</p></div>
+        <div class="step"><span class="num">3</span><h3>Reclamamos contigo</h3><p>Carta lista para enviar, dónde presentarla y aviso cuando venza el plazo. Si no responden, preparamos el siguiente paso.</p></div>
+      </div>
+    </div>
+  </section>
+
+  <div class="wrap sec">
+    <h2>Qué revisamos</h2>
+    <div class="grid">
+      <div class="card item"><svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="#0F6B5C" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M5 12.5l4.5 4.5L19 7"/></svg>Subidas de tarifa sin aviso previo</div>
+      <div class="card item"><svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="#0F6B5C" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M5 12.5l4.5 4.5L19 7"/></svg>Servicios que no has contratado</div>
+      <div class="card item"><svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="#0F6B5C" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M5 12.5l4.5 4.5L19 7"/></svg>Penalizaciones por permanencia</div>
+      <div class="card item"><svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="#0F6B5C" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M5 12.5l4.5 4.5L19 7"/></svg>Cobros después de darte de baja</div>
+    </div>
+  </div>
+
+  <section class="band" id="precio">
+    <div class="wrap sec">
+      <h2>Precio claro</h2>
+      <div class="grid" style="grid-template-columns:repeat(auto-fit,minmax(280px,1fr))">
+        <div class="price alt"><strong>Análisis de factura</strong><span class="display">Gratis</span><p>Te decimos qué ha cambiado, cuánto pagas de más y si hay caso. Si no lo hay, te lo decimos y no pagas nada.</p></div>
+        <div class="price main"><strong>Reclamación completa</strong><div style="display:flex;align-items:baseline;gap:8px;flex-wrap:wrap"><span class="display">9 €</span><span style="color:#D5ECE6">pago único por caso</span></div><p>Carta formal, informe, dónde presentarla, avisos de plazo y ayuda si la empresa te la rechaza. Sin cuotas ni comisión sobre lo que recuperes.</p></div>
+      </div>
+    </div>
+  </section>
+
+  <div class="wrap sec" style="max-width:820px">
+    <h2>Preguntas frecuentes</h2>
+    <div class="card faq"><h3>¿Es asesoramiento jurídico?</h3><p>No. Te damos información y documentos para que reclames tú mismo, de forma ordenada. No prometemos resultados: te decimos con honestidad si tu caso es sólido, dudoso o difícil.</p></div>
+    <div class="card faq" id="privacidad"><h3>¿Qué hacéis con mis facturas?</h3><p>Solo las usamos para analizar tu caso. Se guardan en un almacén privado, no las compartimos con nadie y puedes pedir que las borremos cuando quieras escribiendo a bcninteriors@gmail.com.</p></div>
+    <div class="card faq"><h3>¿Con qué compañías funciona?</h3><p>Con cualquier operadora de móvil, fibra o telefonía fija en España. Pronto también luz y gas.</p></div>
+  </div>
+</main>
+
+<footer>
+  <div class="wrap">
+    <span class="logo" style="color:#fff;font-size:18px">Reclamaciones IA</span>
+    <span>Información orientativa, no asesoramiento jurídico.</span>
+  </div>
+</footer>
+
+<script>
+(function () {
+  var SUPABASE_URL = 'https://ndmabpncdembjnzfeisq.supabase.co';
+  var ANON_KEY = 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6Im5kbWFicG5jZGVtYmpuemZlaXNxIiwicm9sZSI6ImFub24iLCJpYXQiOjE3ODkyNTMzNDgsImV4cCI6MjEwNDgyOTM0OH0.KpHdIXCURIKnEQVrL5o4_33NiFxrmCFdFKxpUrQK80M';
+  var BUCKET = 'reclamaciones-facturas';
+  var MAX_FILES = 5, MAX_SIZE = 10 * 1024 * 1024;
+  var TIPOS = ['image/jpeg','image/png','image/webp','image/heic','image/heif','application/pdf'];
+
+  var form = document.getElementById('form');
+  var input = document.getElementById('archivos');
+  var drop = document.getElementById('drop');
+  var lista = document.getElementById('lista');
+  var errorEl = document.getElementById('error');
+  var btn = document.getElementById('enviar');
+  var gracias = document.getElementById('gracias');
+  var archivos = [];
+
+  function mostrarError(msg) { errorEl.textContent = msg; errorEl.hidden = !msg; }
+
+  function tipoDe(f) {
+    if (f.type) return f.type;
+    var n = f.name.toLowerCase();
+    if (n.endsWith('.heic')) return 'image/heic';
+    if (n.endsWith('.heif')) return 'image/heif';
+    if (n.endsWith('.pdf')) return 'application/pdf';
+    return '';
+  }
+
+  function pintar() {
+    lista.innerHTML = '';
+    archivos.forEach(function (f, i) {
+      var li = document.createElement('li');
+      var s = document.createElement('span');
+      s.textContent = f.name + ' · ' + (f.size / 1048576).toFixed(1) + ' MB';
+      var b = document.createElement('button');
+      b.type = 'button'; b.textContent = 'Quitar';
+      b.setAttribute('aria-label', 'Quitar ' + f.name);
+      b.onclick = function () { archivos.splice(i, 1); pintar(); };
+      li.appendChild(s); li.appendChild(b); lista.appendChild(li);
+    });
+  }
+
+  function anadir(fileList) {
+    mostrarError('');
+    for (var i = 0; i < fileList.length; i++) {
+      var f = fileList[i];
+      if (archivos.length >= MAX_FILES) { mostrarError('Puedes subir como máximo ' + MAX_FILES + ' archivos.'); break; }
+      if (TIPOS.indexOf(tipoDe(f)) === -1) { mostrarError('«' + f.name + '» no es una foto ni un PDF.'); continue; }
+      if (f.size > MAX_SIZE) { mostrarError('«' + f.name + '» pesa más de 10 MB.'); continue; }
+      archivos.push(f);
+    }
+    pintar();
+  }
+
+  input.addEventListener('change', function () { anadir(input.files); input.value = ''; });
+  ['dragenter','dragover'].forEach(function (ev) {
+    drop.addEventListener(ev, function (e) { e.preventDefault(); drop.classList.add('over'); });
+  });
+  ['dragleave','drop'].forEach(function (ev) {
+    drop.addEventListener(ev, function (e) { e.preventDefault(); drop.classList.remove('over'); });
+  });
+  drop.addEventListener('drop', function (e) { if (e.dataTransfer) anadir(e.dataTransfer.files); });
+
+  function uuid() {
+    if (window.crypto && crypto.randomUUID) return crypto.randomUUID();
+    return 'xxxxxxxx-xxxx-4xxx-yxxx-xxxxxxxxxxxx'.replace(/[xy]/g, function (c) {
+      var r = Math.random() * 16 | 0; return (c === 'x' ? r : (r & 3 | 8)).toString(16);
+    });
+  }
+
+  function nombreSeguro(n) {
+    return n.normalize('NFD').replace(/[̀-ͯ]/g, '').replace(/[^a-zA-Z0-9._-]+/g, '_').slice(-80);
+  }
+
+  form.addEventListener('submit', async function (e) {
+    e.preventDefault();
+    mostrarError('');
+    var email = document.getElementById('email').value.trim();
+    var comentario = document.getElementById('comentario').value.trim();
+    var tipoSel = form.querySelector('input[name="tipo"]:checked');
+    var avisoSel = form.querySelector('input[name="aviso"]:checked');
+    var operadora = document.getElementById('operadora').value;
+    var fechaAviso = document.getElementById('fechaAviso').value.trim();
+    var nombre = document.getElementById('nombre').value.trim();
+    if (!archivos.length) return mostrarError('Sube al menos una factura.');
+    if (!tipoSel) return mostrarError('Indica si reclamas como particular, autónomo o empresa.');
+    if (!avisoSel) return mostrarError('Dinos si te avisaron del cambio (si no lo sabes, marca «No lo sé»).');
+    if (!/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(email)) return mostrarError('Revisa el correo electrónico.');
+    if (!document.getElementById('acepto').checked) return mostrarError('Necesitamos tu permiso para analizar las facturas.');
+
+    btn.disabled = true; btn.textContent = 'Enviando…';
+    var id = uuid();
+    var rutas = [];
+    try {
+      for (var i = 0; i < archivos.length; i++) {
+        var f = archivos[i];
+        var ruta = 'solicitudes/' + id + '/' + (i + 1) + '-' + nombreSeguro(f.name);
+        var r = await fetch(SUPABASE_URL + '/storage/v1/object/' + BUCKET + '/' + ruta, {
+          method: 'POST',
+          headers: { apikey: ANON_KEY, Authorization: 'Bearer ' + ANON_KEY, 'Content-Type': tipoDe(f), 'x-upsert': 'false' },
+          body: f
+        });
+        if (!r.ok) throw new Error('subida');
+        rutas.push(ruta);
+      }
+      var res = await fetch(SUPABASE_URL + '/rest/v1/reclamaciones_solicitudes', {
+        method: 'POST',
+        headers: { apikey: ANON_KEY, Authorization: 'Bearer ' + ANON_KEY, 'Content-Type': 'application/json', Prefer: 'return=minimal' },
+        body: JSON.stringify({
+          id: id, email: email, archivos: rutas, comentario: comentario || null,
+          tipo_cliente: tipoSel.value, aviso_previo: avisoSel.value,
+          operadora: operadora || null,
+          fecha_aviso: (avisoSel.value === 'si' && fechaAviso) ? fechaAviso : null,
+          nombre: nombre || null
+        })
+      });
+      if (!res.ok) throw new Error('registro');
+
+      document.getElementById('emailOk').textContent = email;
+      form.hidden = true; gracias.hidden = false; gracias.focus();
+    } catch (err) {
+      mostrarError('No hemos podido enviar tus facturas. Comprueba la conexión e inténtalo de nuevo.');
+    } finally {
+      btn.disabled = false; btn.textContent = 'Analizar gratis';
+    }
+  });
+
+  var campoFecha = document.getElementById('campoFecha');
+  form.querySelectorAll('input[name="aviso"]').forEach(function (r) {
+    r.addEventListener('change', function () { campoFecha.hidden = r.value !== 'si' || !r.checked; });
+  });
+
+  document.getElementById('otra').addEventListener('click', function () {
+    archivos = []; pintar(); form.reset(); campoFecha.hidden = true;
+    gracias.hidden = true; form.hidden = false;
+  });
+})();
+</script>
+</body>
+</html>
