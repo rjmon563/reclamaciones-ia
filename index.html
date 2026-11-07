@@ -105,6 +105,20 @@ section.band{background:var(--card);border-top:1px solid var(--line);border-bott
 .price p{margin:0;font-size:15px}
 .faq{display:flex;flex-direction:column;gap:6px;padding:20px}
 .faq h3{margin:0;font-size:1.05rem}
+.alerta{background:var(--warn-bg);border-top:1px solid var(--warn-line);border-bottom:1px solid var(--warn-line)}
+.alerta-in{display:flex;flex-wrap:wrap;gap:40px;align-items:center;padding-top:56px;padding-bottom:56px}
+.alerta-txt{flex:999 1 460px;min-width:0;display:flex;flex-direction:column;gap:16px}
+.alerta-txt h2{font-size:clamp(1.8rem,4vw,2.6rem)}
+.alerta-txt p{margin:0;font-size:1.05rem;color:var(--ink2)}
+.pill-warn{background:#FDEEE3;color:var(--warn)}
+.alerta-card{flex:1 1 320px;min-width:0;max-width:380px;display:flex;flex-direction:column;gap:14px;padding:20px;border-radius:22px}
+.salto{display:flex;align-items:center;justify-content:space-between;gap:10px}
+.salto div{display:flex;flex-direction:column}
+.salto small{font-size:12px;color:var(--muted)}
+.salto .display{font-size:2.2rem;line-height:1}
+.caducan{list-style:none;margin:0;padding:0;display:flex;flex-direction:column;gap:6px}
+.caducan li{display:flex;justify-content:space-between;gap:10px;padding:8px 12px;border-radius:10px;background:var(--bg);font-size:14px}
+.caducan b{color:var(--warn);font-weight:600;white-space:nowrap}
 footer{background:var(--ink);color:#C9D0CB}
 footer .wrap{display:flex;flex-wrap:wrap;justify-content:space-between;gap:14px;padding-top:32px;padding-bottom:32px;font-size:14px}
 footer a{color:#C9D0CB}
@@ -220,12 +234,38 @@ footer a{color:#C9D0CB}
     </div>
   </div>
 
+  <section class="alerta" id="descuentos" aria-labelledby="tit-descuentos">
+    <div class="wrap alerta-in">
+      <div class="alerta-txt">
+        <span class="pill pill-warn">Nuevo</span>
+        <h2 id="tit-descuentos">Te avisamos antes de que tu factura se duplique</h2>
+        <p>Muchas tarifas solo son baratas por los descuentos de los primeros 12 o 24 meses. Cuando caducan, la factura se dispara y casi nadie lo ve venir.</p>
+        <p>Al revisar tus facturas buscamos <strong>cada descuento y su fecha de fin</strong>, te decimos cuánto pagarás después y te avisamos con tiempo para negociar o cambiar de compañía.</p>
+        <a class="btn" href="#analizar" style="align-self:flex-start">Revisar mis descuentos</a>
+      </div>
+      <div class="alerta-card card" role="img" aria-label="Ejemplo: factura de 55 euros que pasa a 107 euros en diciembre al caducar tres descuentos">
+        <span style="font-size:13px;color:var(--muted)">Ejemplo real de un cliente (datos anonimizados)</span>
+        <div class="salto">
+          <div><small>Ahora</small><span class="display">55 €</span></div>
+          <svg width="28" height="28" viewBox="0 0 24 24" fill="none" stroke="#9A3412" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M5 12h14M13 6l6 6-6 6"/></svg>
+          <div><small>Desde diciembre</small><span class="display" style="color:var(--warn)">107 €</span></div>
+        </div>
+        <ul class="caducan">
+          <li><span>Descuento del 30 % del pack</span><b>caduca 02/12</b></li>
+          <li><span>3 € en cada línea móvil</span><b>caduca 28/11</b></li>
+          <li><span>Descuento línea adicional</span><b>caduca 28/11</b></li>
+        </ul>
+        <div class="row" style="background:var(--warn-bg)">Te costaría <span class="tag" style="background:#FDEEE3;color:var(--warn)">+627 € al año</span></div>
+      </div>
+    </div>
+  </section>
+
   <section class="band" id="como">
     <div class="wrap sec">
       <h2>Cómo funciona</h2>
       <div class="grid">
         <div class="step"><span class="num">1</span><h3>Subes tus facturas</h3><p>La anterior y la actual. Una foto con el móvil es suficiente.</p></div>
-        <div class="step"><span class="num">2</span><h3>Te decimos si hay caso</h3><p>Comparamos concepto por concepto y te explicamos qué ha cambiado, cuánto pagas de más y si merece la pena reclamar.</p></div>
+        <div class="step"><span class="num">2</span><h3>Te decimos si hay caso</h3><p>Comparamos concepto por concepto, te explicamos qué ha cambiado y cuánto pagas de más, y te avisamos de los descuentos que van a caducar.</p></div>
         <div class="step"><span class="num">3</span><h3>Reclamamos contigo</h3><p>Carta lista para enviar, dónde presentarla y aviso cuando venza el plazo. Si no responden, preparamos el siguiente paso.</p></div>
       </div>
     </div>
@@ -238,6 +278,7 @@ footer a{color:#C9D0CB}
       <div class="card item"><svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="#0F6B5C" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M5 12.5l4.5 4.5L19 7"/></svg>Servicios que no has contratado</div>
       <div class="card item"><svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="#0F6B5C" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M5 12.5l4.5 4.5L19 7"/></svg>Penalizaciones por permanencia</div>
       <div class="card item"><svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="#0F6B5C" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M5 12.5l4.5 4.5L19 7"/></svg>Cobros después de darte de baja</div>
+      <div class="card item"><svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="#0F6B5C" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M5 12.5l4.5 4.5L19 7"/></svg>Descuentos que están a punto de caducar</div>
     </div>
   </div>
 
