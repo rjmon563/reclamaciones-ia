@@ -5,8 +5,9 @@
 import "jsr:@supabase/functions-js/edge-runtime.d.ts";
 import { createClient } from "npm:@supabase/supabase-js@2.45.4";
 
-const DESTINO = "reclamacionesia@gmail.com";
-const REMITENTE = "Reclamaciones IA <onboarding@resend.dev>";
+const DESTINO = "reclamacionesia@gmail.com";            // aviso interno para Antonio
+const REMITENTE = "Reclamaciones IA <avisos@reclamacionesia.es>";
+const RESPONDER_A = "reclamacionesia@gmail.com";         // cambiar a contacto@reclamacionesia.es cuando exista el buzón
 const BUCKET = "reclamaciones-facturas";
 const UUID = /^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$/i;
 
@@ -89,5 +90,31 @@ Deno.serve(async (req) => {
   });
   const res = await r.json().catch(() => ({}));
   if (!r.ok) { await liberar(); return json(502, { error: "resend", detail: res }); }
-  return json(200, { sent: true, resend_id: res.id });
+
+  // Confirmación al cliente (si falla, no anula el aviso interno)
+  const saludo = s.nombre ? `Hola, ${esc(s.nombre)}:` : "Hola:";
+  const n = (s.archivos ?? []).length;
+  const htmlCliente = `
+  <div style="font-family:Arial,sans-serif;color:#14201C;max-width:560px;line-height:1.5">
+    <p>${saludo}</p>
+    <p>Hemos recibido tu consulta y ${n === 1 ? "el documento que nos has enviado" : `los ${n} documentos que nos has enviado`}${s.operadora ? ` sobre <strong>${esc(s.operadora)}</strong>` : ""}.</p>
+    <p>Los revisamos y <strong>te respondemos en menos de 24 horas</strong> con el resultado: qué ha cambiado en tu factura, cuánto pagas de más y si merece la pena reclamar. También miraremos si tienes descuentos o permanencias a punto de caducar.</p>
+    ${s.acepta_recordatorios ? `<p>Como nos lo has pedido, te avisaremos con tiempo antes de que caduquen tus descuentos o permanencias. Si en algún momento no quieres recibir estos avisos, respóndenos a este correo.</p>` : ""}
+    <p>Si quieres añadir algo o enviarnos otro documento, simplemente responde a este correo.</p>
+    <p>Un saludo,<br><strong>Reclamaciones IA</strong></p>
+    <p style="font-size:12px;color:#55625D;margin-top:24px">Información orientativa, no asesoramiento jurídico. Usamos tus documentos solo para analizar tu caso y puedes pedir que los borremos cuando quieras.</p>
+  </div>`;
+  const rc = await fetch("https://api.resend.com/emails", {
+    method: "POST",
+    headers: { Authorization: `Bearer ${key}`, "Content-Type": "application/json" },
+    body: JSON.stringify({
+      from: REMITENTE,
+      to: [s.email],
+      reply_to: RESPONDER_A,
+      subject: "Hemos recibido tu consulta · Reclamaciones IA",
+      html: htmlCliente,
+    }),
+  });
+  const resC = await rc.json().catch(() => ({}));
+  return json(200, { sent: true, resend_id: res.id, cliente: rc.ok ? resC.id : { error: resC } });
 });
