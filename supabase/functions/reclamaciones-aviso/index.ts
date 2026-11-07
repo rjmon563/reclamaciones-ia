@@ -66,6 +66,8 @@ Deno.serve(async (req) => {
       ${fila("Compañía", s.operadora)}
       ${fila("¿Le avisaron?", AVISOS[s.aviso_previo] ?? s.aviso_previo)}
       ${fila("Fecha del aviso", s.fecha_aviso)}
+      ${fila("Recordatorios", s.acepta_recordatorios ? "Sí, quiere que le avisemos" : "No")}
+      ${fila("Documentos", `${(s.archivos ?? []).length}`)}
       ${fila("Recibida", new Date(s.created_at).toLocaleString("es-ES", { timeZone: "Europe/Madrid" }))}
     </table>
     ${s.comentario ? `<p style="margin:16px 0 4px;color:#55625D">Qué ha pasado:</p><blockquote style="margin:0;padding:8px 12px;background:#F6F7F4;border-radius:8px">${esc(s.comentario)}</blockquote>` : ""}

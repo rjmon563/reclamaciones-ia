@@ -147,8 +147,8 @@ footer a{color:#C9D0CB}
       <form id="form" class="card" novalidate>
         <label class="drop" id="drop" for="archivos">
           <svg width="28" height="28" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M12 16V4M7 9l5-5 5 5"/><path d="M4 16v3a1 1 0 0 0 1 1h14a1 1 0 0 0 1-1v-3"/></svg>
-          <strong>Sube tus facturas completas</strong>
-          <small>La de antes de la subida y la actual · PDF con todas las páginas o fotos · máx. 10 MB cada una</small>
+          <strong>Sube tus facturas y otros documentos</strong>
+          <small>Facturas completas (la de antes de la subida y la actual), contrato, avisos de la compañía o capturas · PDF o fotos · hasta 10 archivos de 10 MB</small>
           <input class="sr" id="archivos" type="file" multiple accept="image/*,application/pdf">
         </label>
         <ul class="files" id="lista" aria-live="polite"></ul>
@@ -202,6 +202,11 @@ footer a{color:#C9D0CB}
         <label class="check">
           <input type="checkbox" id="acepto" required>
           <span>Acepto que usen mis facturas solo para analizar mi caso, según la <a href="#privacidad">política de privacidad</a>.</span>
+        </label>
+
+        <label class="check">
+          <input type="checkbox" id="recordatorios">
+          <span>Quiero que me aviséis antes de que caduquen mis descuentos o permanencias <span style="color:var(--muted)">(opcional, puedes darte de baja cuando quieras)</span>.</span>
         </label>
 
         <p class="error" id="error" role="alert" hidden></p>
@@ -312,7 +317,7 @@ footer a{color:#C9D0CB}
   var SUPABASE_URL = 'https://ndmabpncdembjnzfeisq.supabase.co';
   var ANON_KEY = 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6Im5kbWFicG5jZGVtYmpuemZlaXNxIiwicm9sZSI6ImFub24iLCJpYXQiOjE3ODkyNTMzNDgsImV4cCI6MjEwNDgyOTM0OH0.KpHdIXCURIKnEQVrL5o4_33NiFxrmCFdFKxpUrQK80M';
   var BUCKET = 'reclamaciones-facturas';
-  var MAX_FILES = 5, MAX_SIZE = 10 * 1024 * 1024;
+  var MAX_FILES = 10, MAX_SIZE = 10 * 1024 * 1024;
   var TIPOS = ['image/jpeg','image/png','image/webp','image/heic','image/heif','application/pdf'];
 
   var form = document.getElementById('form');
@@ -420,7 +425,8 @@ footer a{color:#C9D0CB}
           tipo_cliente: tipoSel.value, aviso_previo: avisoSel.value,
           operadora: operadora || null,
           fecha_aviso: (avisoSel.value === 'si' && fechaAviso) ? fechaAviso : null,
-          nombre: nombre || null
+          nombre: nombre || null,
+          acepta_recordatorios: document.getElementById('recordatorios').checked
         })
       });
       if (!res.ok) throw new Error('registro');
