@@ -51,6 +51,7 @@ Tarea: analiza TODOS los documentos adjuntos (pueden ser varias facturas de dist
   "recomendacion": "qué debería hacer el cliente, en orden, de forma práctica (reclamar, negociar antes de una fecha, cambiar de compañía...)",
   "datos_que_faltan": ["qué documento o dato pedir al cliente para confirmar"],
   "fechas_recordatorio": [{"fecha": "DD/MM/AAAA", "motivo": ""}],
+  "guion_llamada": "guion práctico, en pasos numerados y frases cortas en segunda persona, para que el cliente llame o escriba por chat a su compañía: 1) datos a tener a mano (titular, DNI/CIF, número de cliente o línea, facturas); 2) qué decir al empezar; 3) qué pedir exactamente, con las cifras y fechas reales de sus documentos (devolución de un cobro, mantener o renovar un descuento, aplicar el precio anterior...); 4) qué responder si dicen que no; 5) qué pedir al final por escrito (número de incidencia, nuevas condiciones por correo o SMS, fecha de inicio y fin de cualquier descuento, penalización si la hay); 6) qué hacer si no lo solucionan (reclamación por escrito, que podemos preparar).",
   "borrador_respuesta_cliente": "correo completo al cliente en español, tono cercano y claro, tuteando, sin jerga legal. Empieza por 'Hola' (con su nombre si lo sabes por los documentos) y firma 'El equipo de Reclamaciones IA'. Explica lo encontrado con cifras, la valoración y los pasos. Si hay caso para reclamar, menciona que podemos preparar la reclamación completa por 9 €. Termina recordando que es información orientativa, no asesoramiento jurídico."
 }
 
@@ -63,6 +64,7 @@ Reglas importantes:
 - Valoración: "solido" = hay base clara para reclamar; "depende" = falta un dato clave (por ejemplo, si hubo aviso); "dificil" = poco fundamento; "sin_caso" = no hay nada que reclamar (aunque quizá sí algo que negociar).
 - Sé honesto: si lo que más ahorra es negociar o cambiar de compañía y no reclamar, dilo así.
 - "impacto": calcula "factura_prevista_con_iva" con una cuenta, nunca a ojo: factura actual con IVA + (suma de los descuentos que caducan, sin IVA) × 1,21. Escribe la cuenta en "explicacion". "diferencia_anual_con_iva" = (prevista − actual) × 12. Si no hay datos para calcularlo, pon null.
+- En "guion_llamada" usa solo datos reales del caso. No le hagas amenazar con irse si tiene permanencia o penalización sin decirle antes cuánto le costaría; si puede irse sin penalización (por ejemplo, por un cambio de condiciones), díselo como argumento.
 - En "fechas_recordatorio" incluye, si existen, un aviso unas 3-4 semanas antes de que caduque cada descuento importante o termine una permanencia.`;
 
 Deno.serve(async (req) => {
@@ -140,7 +142,7 @@ async function analizar(sb: any, s: any) {
       headers: { "Content-Type": "application/json", "x-api-key": apiKey, "anthropic-version": "2023-06-01" },
       body: JSON.stringify({
         model: MODELO,
-        max_tokens: 6000,
+        max_tokens: 8000,
         messages: [{ role: "user", content: [...bloques, { type: "text", text: INSTRUCCIONES(s, hoyMadrid(), omitidos) }] }],
       }),
     });
@@ -197,6 +199,7 @@ function htmlAnalisis(s: any, a: any, omitidos: string[]) {
   ${sec("Datos que faltan", lista(a.datos_que_faltan, (x) => esc(x)))}
   ${sec("Fechas para recordatorios", lista(a.fechas_recordatorio, (x) => `${esc(x.fecha)}: ${esc(x.motivo)}`))}
   ${omitidos.length ? `<p style="color:#9A3412">No se han podido leer: ${esc(omitidos.join(", "))}</p>` : ""}
+  ${a.guion_llamada ? `<h3 style="margin:26px 0 8px;font-size:16px">Guion para llamar a la compañía</h3><div style="white-space:pre-wrap;padding:14px 16px;border:1px solid #E1E5E1;border-radius:10px;background:#F6F7F4">${esc(a.guion_llamada)}</div>` : ""}
   <h3 style="margin:26px 0 8px;font-size:16px">Borrador de respuesta al cliente</h3>
   <p style="margin:0 0 8px;font-size:13px;color:#55625D">Revísalo, corrige lo que haga falta y envíalo respondiendo a este correo (la respuesta va al cliente).</p>
   <div style="white-space:pre-wrap;padding:14px 16px;border:1px solid #E1E5E1;border-radius:10px;background:#fff">${esc(a.borrador_respuesta_cliente)}</div>
