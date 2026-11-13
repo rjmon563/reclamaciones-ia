@@ -16,3 +16,12 @@ La clave de Resend está cifrada en Supabase Vault (`reclamaciones_resend_api_ke
 Desde el 7/11/2026 los correos salen desde avisos@reclamacionesia.es (dominio verificado en Resend).
 Cada solicitud envía: aviso interno a reclamacionesia@gmail.com + confirmación al cliente
 Desde el 13/11/2026 el aviso interno y las respuestas de los clientes van a contacto@reclamacionesia.es (Zimbra, OVH).
+
+## Agente de análisis (reclamaciones-analisis)
+
+Cuando entra una solicitud, el trigger `reclamaciones_avisar_nueva()` llama también a la función
+`reclamaciones-analisis`. Esta descarga los documentos, los lee con Claude (`claude-sonnet-4-6`,
+clave `ANTHROPIC_API_KEY` en los secretos de Supabase), guarda el resultado en las columnas
+`analisis_estado` / `analisis` / `analisis_at` y envía a contacto@ un **borrador** con el análisis y una
+propuesta de respuesta. El cliente no recibe nada automático: Antonio revisa y responde.
+Si falla (sin crédito, documento ilegible…), llega un correo "No se pudo analizar automáticamente".
