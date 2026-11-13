@@ -62,6 +62,7 @@ Reglas importantes:
 - Normativa orientativa en España: la operadora debe avisar de los cambios de condiciones con al menos un mes de antelación, y ese cambio da derecho a resolver el contrato sin penalización (también a microempresas, salvo renuncia expresa). Si el aviso se hizo en plazo, la subida no es reclamable: dilo con honestidad.
 - Valoración: "solido" = hay base clara para reclamar; "depende" = falta un dato clave (por ejemplo, si hubo aviso); "dificil" = poco fundamento; "sin_caso" = no hay nada que reclamar (aunque quizá sí algo que negociar).
 - Sé honesto: si lo que más ahorra es negociar o cambiar de compañía y no reclamar, dilo así.
+- "impacto": calcula "factura_prevista_con_iva" con una cuenta, nunca a ojo: factura actual con IVA + (suma de los descuentos que caducan, sin IVA) × 1,21. Escribe la cuenta en "explicacion". "diferencia_anual_con_iva" = (prevista − actual) × 12. Si no hay datos para calcularlo, pon null.
 - En "fechas_recordatorio" incluye, si existen, un aviso unas 3-4 semanas antes de que caduque cada descuento importante o termine una permanencia.`;
 
 Deno.serve(async (req) => {
