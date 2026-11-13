@@ -15,4 +15,4 @@ La clave de Resend está cifrada en Supabase Vault (`reclamaciones_resend_api_ke
 ## Confirmación al cliente
 Desde el 7/11/2026 los correos salen desde avisos@reclamacionesia.es (dominio verificado en Resend).
 Cada solicitud envía: aviso interno a reclamacionesia@gmail.com + confirmación al cliente
-(responder a: reclamacionesia@gmail.com hasta que exista el buzón contacto@reclamacionesia.es).
+Desde el 13/11/2026 el aviso interno y las respuestas de los clientes van a contacto@reclamacionesia.es (Zimbra, OVH).

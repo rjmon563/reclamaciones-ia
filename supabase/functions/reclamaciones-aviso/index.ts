@@ -5,9 +5,9 @@
 import "jsr:@supabase/functions-js/edge-runtime.d.ts";
 import { createClient } from "npm:@supabase/supabase-js@2.45.4";
 
-const DESTINO = "reclamacionesia@gmail.com";            // aviso interno para Antonio
+const DESTINO = "contacto@reclamacionesia.es";           // aviso interno para Antonio
 const REMITENTE = "Reclamaciones IA <avisos@reclamacionesia.es>";
-const RESPONDER_A = "reclamacionesia@gmail.com";         // cambiar a contacto@reclamacionesia.es cuando exista el buzón
+const RESPONDER_A = "contacto@reclamacionesia.es";
 const BUCKET = "reclamaciones-facturas";
 const UUID = /^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$/i;
 
