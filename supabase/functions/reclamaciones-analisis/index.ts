@@ -60,7 +60,7 @@ Reglas importantes:
 - Distingue siempre importes con IVA y sin IVA. Si el cliente es autónomo o empresa, explica el impacto real sin IVA (lo recupera) además del total con IVA.
 - Revisa con especial cuidado las páginas interiores y el detalle de cada factura: ahí suelen estar los descuentos con su fecha de fin, los prorrateos y los avisos de cambio de precio.
 - Si una subida se cobró antes de la fecha anunciada (por ejemplo, prorrateada en un mes anterior), señálalo en "cobros_a_revisar".
-- Normativa orientativa en España: la operadora debe avisar de los cambios de condiciones con al menos un mes de antelación, y ese cambio da derecho a resolver el contrato sin penalización (también a microempresas, salvo renuncia expresa). Si el aviso se hizo en plazo, la subida no es reclamable: dilo con honestidad.
+- Normativa orientativa en España: la operadora debe avisar de los cambios de condiciones con al menos un mes de antelación, y ese cambio da derecho a resolver el contrato sin penalización (también a microempresas, salvo renuncia expresa). Ese derecho a irse sin penalización hay que ejercerlo cuando llega el aviso (antes de que se aplique el cambio o poco después); si ya ha pasado ese plazo, NO lo uses como argumento. Si el aviso se hizo en plazo, la subida no es reclamable: dilo con honestidad.
 - Valoración: "solido" = hay base clara para reclamar; "depende" = falta un dato clave (por ejemplo, si hubo aviso); "dificil" = poco fundamento; "sin_caso" = no hay nada que reclamar (aunque quizá sí algo que negociar).
 - Sé honesto: si lo que más ahorra es negociar o cambiar de compañía y no reclamar, dilo así.
 - "impacto": calcula "factura_prevista_con_iva" con una cuenta, nunca a ojo: factura actual con IVA + (suma de los descuentos que caducan, sin IVA) × 1,21. Escribe la cuenta en "explicacion". "diferencia_anual_con_iva" = (prevista − actual) × 12. Si no hay datos para calcularlo, pon null.
@@ -158,6 +158,17 @@ async function analizar(sb: any, s: any) {
       const limpio = texto.replace(/```json|```/g, "").trim();
       a = JSON.parse(limpio.slice(limpio.indexOf("{"), limpio.lastIndexOf("}") + 1));
     } catch { return await fallo("la IA no devolvió un JSON válido"); }
+
+    // La cuenta del impacto la hace el programa, no la IA
+    const imp = a.impacto || (a.impacto = {});
+    const caducan = (Array.isArray(a.descuentos) ? a.descuentos : []).filter((d: any) => d && d.caduca_pronto && typeof d.importe_mensual_sin_iva === "number");
+    if (typeof imp.factura_actual_con_iva === "number" && caducan.length) {
+      const r2 = (n: number) => Math.round(n * 100) / 100;
+      const suma = r2(caducan.reduce((t: number, d: any) => t + d.importe_mensual_sin_iva, 0));
+      imp.factura_prevista_con_iva = r2(imp.factura_actual_con_iva + suma * 1.21);
+      imp.diferencia_anual_con_iva = r2((imp.factura_prevista_con_iva - imp.factura_actual_con_iva) * 12);
+      imp.explicacion = `Cuenta: ${eur(imp.factura_actual_con_iva)} de la factura actual + ${eur(suma)} sin IVA de descuentos que caducan (${caducan.map((d: any) => `${d.nombre}${d.fecha_fin ? `, ${d.fecha_fin}` : ""}`).join("; ")}) × 1,21 = ${eur(imp.factura_prevista_con_iva)} al mes. Sin IVA son ${eur(suma)} más al mes. Estimación si la compañía no renueva nada.`;
+    }
 
     await sb.from("reclamaciones_solicitudes").update({
       analisis_estado: "listo", analisis: a, analisis_at: new Date().toISOString(),
