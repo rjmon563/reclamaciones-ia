@@ -133,6 +133,7 @@ footer a{color:#C9D0CB}
     <nav aria-label="Secciones">
       <a class="plain" href="#como">Cómo funciona</a>
       <a class="plain" href="#precio">Precio</a>
+      <a class="plain" href="#pregunta">Hazme una pregunta</a>
       <a class="btn" href="#analizar" style="min-height:44px;font-size:15px">Analizar mi factura</a>
     </nav>
   </div>
@@ -298,6 +299,44 @@ footer a{color:#C9D0CB}
     </div>
   </section>
 
+  <section class="band" id="pregunta">
+    <div class="wrap sec" style="max-width:640px">
+      <h2>¿Prefieres preguntar antes de subir nada?</h2>
+      <p style="margin:-14px 0 0;color:var(--ink2);font-size:15px">Cuéntanos qué te ha pasado con dos frases, sin adjuntar factura ni contrato. Te respondemos con lo que podrías hacer ya, y si merece la pena revisar tu caso a fondo.</p>
+
+      <form id="formPregunta" class="card" novalidate style="padding:24px">
+        <label class="field"><span>Tu nombre <span style="font-weight:400;color:var(--muted)">(opcional)</span></span>
+          <input type="text" id="pNombre" maxlength="120" autocomplete="name">
+        </label>
+
+        <label class="field">Tu correo, para enviarte la respuesta
+          <input type="email" id="pEmail" autocomplete="email" placeholder="nombre@correo.com" required>
+        </label>
+
+        <label class="field">¿Qué te ha pasado?
+          <textarea id="pMensaje" maxlength="2000" placeholder="Por ejemplo: me llaman 20 veces al día de un número que no reconozco y mi operadora no me lo bloquea" required></textarea>
+        </label>
+
+        <label class="check">
+          <input type="checkbox" id="pAcepto" required>
+          <span>Acepto que uséis mi mensaje solo para responderme, según la <a href="#privacidad">política de privacidad</a>.</span>
+        </label>
+
+        <p class="error" id="pError" role="alert" hidden></p>
+
+        <button class="btn" type="submit" id="pEnviar">Enviar mi pregunta</button>
+        <p class="hint">Sin registro. Te respondemos en menos de 24 horas.</p>
+      </form>
+
+      <div class="ok card" id="pGracias" hidden tabindex="-1" style="padding:24px">
+        <span class="tag" style="align-self:flex-start">Recibido</span>
+        <h2 style="font-size:1.5rem">¡Gracias! Ya tenemos tu pregunta.</h2>
+        <p>La revisamos y te escribimos a <strong id="pEmailOk"></strong> en menos de 24 horas.</p>
+        <button class="btn" type="button" id="pOtra" style="align-self:flex-start;background:#fff;color:var(--accent);border:1px solid var(--accent)">Hacer otra pregunta</button>
+      </div>
+    </div>
+  </section>
+
   <div class="wrap sec" style="max-width:820px">
     <h2>Preguntas frecuentes</h2>
     <div class="card faq"><h3>¿Es asesoramiento jurídico?</h3><p>No. Te damos información y documentos para que reclames tú mismo, de forma ordenada. No prometemos resultados: te decimos con honestidad si tu caso es sólido, dudoso o difícil.</p></div>
@@ -315,6 +354,12 @@ footer a{color:#C9D0CB}
     <div style="font-size:13px;color:#A9B8B2">
       Antonio Chacón Horrillo (autónomo) · NIF 46049399H ·
       <a href="aviso-legal.html" style="color:#A9B8B2;text-decoration:underline">Aviso legal y protección de datos</a>
+    </div>
+    <div style="font-size:13px;color:#A9B8B2;display:flex;gap:14px;flex-wrap:wrap">
+      <span>Síguenos:</span>
+      <a href="https://www.instagram.com/reclamacionesia" target="_blank" rel="noopener">Instagram</a>
+      <a href="https://www.facebook.com/profile.php?id=1491398644050527" target="_blank" rel="noopener">Facebook</a>
+      <a href="https://www.tiktok.com/@reclamacionesia" target="_blank" rel="noopener">TikTok</a>
     </div>
   </div>
 </footer>
@@ -455,6 +500,54 @@ footer a{color:#C9D0CB}
   document.getElementById('otra').addEventListener('click', function () {
     archivos = []; pintar(); form.reset(); campoFecha.hidden = true;
     gracias.hidden = true; form.hidden = false;
+  });
+
+  // --- Formulario "Haz tu consulta" (sin factura) ---
+  var formP = document.getElementById('formPregunta');
+  var errorP = document.getElementById('pError');
+  var btnP = document.getElementById('pEnviar');
+  var graciasP = document.getElementById('pGracias');
+
+  function mostrarErrorP(msg) { errorP.textContent = msg; errorP.hidden = !msg; }
+
+  formP.addEventListener('submit', async function (e) {
+    e.preventDefault();
+    mostrarErrorP('');
+    var email = document.getElementById('pEmail').value.trim();
+    var mensaje = document.getElementById('pMensaje').value.trim();
+    var nombre = document.getElementById('pNombre').value.trim();
+    if (!/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(email)) return mostrarErrorP('Revisa el correo electrónico.');
+    if (mensaje.length < 10) return mostrarErrorP('Cuéntanos un poco más de qué te ha pasado.');
+    if (!document.getElementById('pAcepto').checked) return mostrarErrorP('Necesitamos tu permiso para usar el mensaje.');
+
+    btnP.disabled = true; btnP.textContent = 'Enviando…';
+    var id = uuid();
+    try {
+      var res = await fetch(SUPABASE_URL + '/rest/v1/reclamaciones_consultas', {
+        method: 'POST',
+        headers: { apikey: ANON_KEY, Authorization: 'Bearer ' + ANON_KEY, 'Content-Type': 'application/json', Prefer: 'return=minimal' },
+        body: JSON.stringify({ id: id, email: email, nombre: nombre || null, mensaje: mensaje })
+      });
+      if (!res.ok) throw new Error('registro');
+
+      // Dispara la respuesta en segundo plano; no bloquea el "gracias" si tarda.
+      fetch(SUPABASE_URL + '/functions/v1/reclamaciones-consulta', {
+        method: 'POST',
+        headers: { apikey: ANON_KEY, Authorization: 'Bearer ' + ANON_KEY, 'Content-Type': 'application/json' },
+        body: JSON.stringify({ id: id })
+      }).catch(function () {});
+
+      document.getElementById('pEmailOk').textContent = email;
+      formP.hidden = true; graciasP.hidden = false; graciasP.focus();
+    } catch (err) {
+      mostrarErrorP('No hemos podido enviar tu pregunta. Comprueba la conexión e inténtalo de nuevo.');
+    } finally {
+      btnP.disabled = false; btnP.textContent = 'Enviar mi pregunta';
+    }
+  });
+
+  document.getElementById('pOtra').addEventListener('click', function () {
+    formP.reset(); graciasP.hidden = true; formP.hidden = false;
   });
 })();
 </script>

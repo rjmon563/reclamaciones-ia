@@ -16,6 +16,37 @@ const UUID = /^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$/i;
 const TIPOS: Record<string, string> = { particular: "particular", autonomo: "autónomo", empresa: "empresa" };
 const AVISOS: Record<string, string> = { si: "dice que sí le avisaron", no: "dice que no le avisaron", no_se: "no sabe si le avisaron" };
 
+// --- Base legal verificada contra el texto consolidado real del BOE ---
+// En vez de que la IA cite de memoria, consultamos el conector boe-connector
+// (misma cuenta de Supabase) para traer el texto vigente de los artículos
+// de las normas que más suelen aplicar a estos casos, y se lo damos al
+// modelo como única fuente permitida para citar.
+const NORMAS_BASE = [
+  { id: "BOE-A-2022-10757", nombre: "Ley 11/2022, de 28 de junio, General de Telecomunicaciones" },
+  { id: "BOE-A-2007-20555", nombre: "Texto Refundido de la Ley General para la Defensa de los Consumidores y Usuarios (TRLGDCU)" },
+  { id: "BOE-A-2018-16673", nombre: "Ley Orgánica 3/2018, de Protección de Datos Personales y garantía de los derechos digitales (LOPDGDD)" },
+];
+// Frases concretas, no raíces sueltas: "contrat" o "resoluci" solas aparecen en
+// decenas de artículos administrativos sin relación con el caso (contratación
+// pública, resolución de conflictos regulatorios...). Con frases de varias
+// palabras acertamos el artículo real (comprobado contra el texto en vivo:
+// esto localiza el art. 67 LGTel —permanencia, 24 meses, baja sin coste— en
+// vez de traer artículos aleatorios por orden de aparición).
+const PALABRAS_CLAVE_LEGAL = [
+  "permanencia", "penalización por", "resolver el contrato", "resolución del contrato",
+  "modificación de las condiciones", "duración del contrato", "baja del servicio",
+  "preaviso", "sin penalización", "rescindir el contrato", "sin coste alguno",
+  "derecho de desistimiento",
+  // Ficheros de morosos / listas de impagados (LOPDGDD, art. 20): caso recurrente
+  // en las reclamaciones reales (p. ej. permanencias disputadas que acaban en
+  // amenaza de "lista de morosos"). Frases copiadas tal cual del artículo real.
+  "sistemas de información crediticia", "deudas ciertas, vencidas y exigibles",
+  "objeto de reclamación", "incumplimiento de obligaciones dinerarias",
+  "posibilidad de inclusión en dichos sistemas", "cinco años desde la fecha de vencimiento",
+];
+const MAX_ARTICULOS_POR_NORMA = 4;
+const MAX_CHARS_TEXTO_LEGAL = 9000; // ahora son 3 normas base, no 2: subo el tope para que la última no se quede sin hueco
+
 function esc(v: unknown): string {
   return String(v ?? "").replace(/[&<>"']/g, (c) => ({ "&": "&amp;", "<": "&lt;", ">": "&gt;", '"': "&quot;", "'": "&#39;" }[c]!));
 }
@@ -26,7 +57,104 @@ function hoyMadrid(): string {
   return new Date().toLocaleDateString("es-ES", { timeZone: "Europe/Madrid", day: "2-digit", month: "2-digit", year: "numeric" });
 }
 
-const INSTRUCCIONES = (s: any, hoy: string, omitidos: string[]) => `Eres el analista de "Reclamaciones IA", un servicio español que revisa facturas de telefonía (móvil, fibra, fijo) para detectar cobros de más, subidas de precio, descuentos que caducan y permanencias, y que aconseja con honestidad si conviene reclamar, negociar o cambiar de compañía.
+/** Llama al conector boe-connector (misma cuenta, misma Supabase). */
+async function llamarBoeConnector(body: Record<string, unknown>) {
+  const url = `${Deno.env.get("SUPABASE_URL")}/functions/v1/boe-connector`;
+  const key = Deno.env.get("SUPABASE_SERVICE_ROLE_KEY")!;
+  const r = await fetch(url, {
+    method: "POST",
+    headers: { "Content-Type": "application/json", Authorization: `Bearer ${key}`, apikey: key },
+    body: JSON.stringify(body),
+  });
+  if (!r.ok) throw new Error(`boe-connector ${r.status}: ${(await r.text()).slice(0, 300)}`);
+  return await r.json();
+}
+
+/**
+ * El texto consolidado del BOE (acción "texto") es una secuencia de nodos,
+ * cada uno con "#text" y "@_class" (p.ej. "articulo", "parrafo", "parrafo_2").
+ * Un nodo @_class "articulo" abre un artículo nuevo; los siguientes nodos son
+ * su cuerpo, hasta el siguiente "articulo". Recorremos el árbol en orden de
+ * documento para reconstruir esa secuencia, sin asumir en qué nivel anida
+ * el XML (eso no está documentado).
+ */
+function extraerNodosDeTexto(obj: unknown, out: { texto: string; clase: string }[] = []) {
+  if (!obj || typeof obj !== "object") return out;
+  const o = obj as Record<string, unknown>;
+  if (typeof o["#text"] === "string" && typeof o["@_class"] === "string") {
+    out.push({ texto: o["#text"] as string, clase: o["@_class"] as string });
+  }
+  for (const v of Object.values(o)) {
+    if (Array.isArray(v)) v.forEach((x) => extraerNodosDeTexto(x, out));
+    else if (v && typeof v === "object") extraerNodosDeTexto(v, out);
+  }
+  return out;
+}
+
+function agruparEnArticulos(nodos: { texto: string; clase: string }[]) {
+  const articulos: { titulo: string; cuerpo: string[] }[] = [];
+  let actual: { titulo: string; cuerpo: string[] } | null = null;
+  for (const n of nodos) {
+    if (n.clase === "articulo") {
+      if (actual) articulos.push(actual);
+      actual = { titulo: n.texto, cuerpo: [] };
+    } else if (actual) {
+      actual.cuerpo.push(n.texto);
+    }
+  }
+  if (actual) articulos.push(actual);
+  return articulos;
+}
+
+/**
+ * Trae de boe-connector el texto completo de las normas base, localiza los
+ * artículos cuyo contenido (no solo el título) toca las palabras clave del
+ * caso, y devuelve un bloque de texto con las citas literales, listo para
+ * pegar en el prompt. Si el BOE no responde, devuelve cadena vacía y el
+ * análisis sigue sin romperse.
+ */
+async function obtenerBaseLegalVerificada(): Promise<string> {
+  const citas: string[] = [];
+  for (const norma of NORMAS_BASE) {
+    try {
+      const resp = await llamarBoeConnector({ action: "texto", id: norma.id });
+      const nodos = extraerNodosDeTexto(resp.contenido);
+      const articulos = agruparEnArticulos(nodos);
+
+      // El texto consolidado repite a veces el mismo artículo (versiones
+      // históricas, notas de modificación) e incluye disposiciones no
+      // numeradas: nos quedamos solo con "Artículo N", deduplicamos por
+      // título, y puntuamos por cuántas frases clave distintas aparecen
+      // (no por orden de aparición), para que el artículo realmente
+      // relevante (p.ej. el que regula permanencia y penalización) suba
+      // al principio en vez de quedarse fuera del cupo.
+      const vistos = new Set<string>();
+      const puntuados: { art: { titulo: string; cuerpo: string[] }; score: number }[] = [];
+      for (const art of articulos) {
+        if (!art.titulo.trim().toLowerCase().startsWith("artículo")) continue;
+        if (vistos.has(art.titulo)) continue;
+        const texto = (art.titulo + " " + art.cuerpo.join(" ")).toLowerCase();
+        const score = PALABRAS_CLAVE_LEGAL.filter((k) => texto.includes(k)).length;
+        if (score > 0) {
+          vistos.add(art.titulo);
+          puntuados.push({ art, score });
+        }
+      }
+      puntuados.sort((a, b) => b.score - a.score);
+      const relevantes = puntuados.slice(0, MAX_ARTICULOS_POR_NORMA).map((p) => p.art);
+
+      for (const art of relevantes) {
+        const texto = (art.titulo + " " + art.cuerpo.join(" ")).replace(/\s+/g, " ").trim().slice(0, 1400);
+        if (texto) citas.push(`[${norma.nombre}]\n${texto}`);
+      }
+    } catch (e) {
+      console.error("[analisis] texto BOE falló:", norma.id, (e as Error).message);
+    }
+  }
+  return citas.join("\n\n").slice(0, MAX_CHARS_TEXTO_LEGAL);
+}
+
+const INSTRUCCIONES = (s: any, hoy: string, omitidos: string[], baseLegal: string) => `Eres el analista de "Reclamaciones IA", un servicio español que revisa facturas de telefonía (móvil, fibra, fijo) para detectar cobros de más, subidas de precio, descuentos que caducan y permanencias, y que aconseja con honestidad si conviene reclamar, negociar o cambiar de compañía.
 
 Fecha de hoy: ${hoy}.
 Datos que ha dado el cliente:
@@ -35,6 +163,10 @@ Datos que ha dado el cliente:
 - Aviso previo del cambio: ${AVISOS[s.aviso_previo] ?? "no indicado"}${s.fecha_aviso ? ` (cuándo: ${s.fecha_aviso})` : ""}
 - Lo que cuenta: ${s.comentario ? JSON.stringify(s.comentario) : "nada"}
 ${omitidos.length ? `- Documentos que no se han podido leer por tamaño: ${omitidos.join(", ")}` : ""}
+
+${baseLegal
+  ? `TEXTO LEGAL VERIFICADO (extraído en vivo del texto consolidado del BOE, es la única fuente que puedes citar como artículo de ley; si citas un artículo, cópialo o resúmelo fielmente a partir de este texto y no de tu memoria; si ninguno de estos artículos aplica al caso, no cites ninguno):\n${baseLegal}`
+  : `No se ha podido verificar el texto legal en vivo contra el BOE en este momento. No cites artículos ni números de ley concretos: limita cualquier referencia normativa a términos generales (p. ej. "la normativa de telecomunicaciones exige preaviso ante cambios de condiciones"), sin inventar números de artículo.`}
 
 Tarea: analiza TODOS los documentos adjuntos (pueden ser varias facturas de distintos meses, contratos, avisos o capturas) y responde SOLO con un JSON válido, sin markdown ni texto fuera del JSON, con esta forma exacta:
 {
@@ -48,6 +180,7 @@ Tarea: analiza TODOS los documentos adjuntos (pueden ser varias facturas de dist
   "impacto": {"factura_actual_con_iva": number|null, "factura_prevista_con_iva": number|null, "a_partir_de": "", "diferencia_anual_con_iva": number|null, "explicacion": ""},
   "valoracion": "solido" | "depende" | "dificil" | "sin_caso",
   "motivo_valoracion": "",
+  "base_legal": [{"norma": "nombre exacto de la norma tal como aparece en el TEXTO LEGAL VERIFICADO", "articulo": "título del artículo tal como aparece arriba", "cita_literal": "fragmento literal (o resumen muy fiel) del texto verificado que aplica a este caso"}],
   "recomendacion": "qué debería hacer el cliente, en orden, de forma práctica (reclamar, negociar antes de una fecha, cambiar de compañía...)",
   "datos_que_faltan": ["qué documento o dato pedir al cliente para confirmar"],
   "fechas_recordatorio": [{"fecha": "DD/MM/AAAA", "motivo": ""}],
@@ -57,10 +190,11 @@ Tarea: analiza TODOS los documentos adjuntos (pueden ser varias facturas de dist
 
 Reglas importantes:
 - Usa SOLO datos que aparezcan en los documentos o que haya dado el cliente. Si algo no se ve, ponlo en "datos_que_faltan"; nunca lo inventes ni lo supongas.
+- "base_legal" solo puede contener artículos que aparezcan literalmente en el TEXTO LEGAL VERIFICADO de arriba. Si no hay ninguno relevante para este caso concreto, deja "base_legal" como una lista vacía []. Nunca inventes un artículo ni cites de memoria.
 - Distingue siempre importes con IVA y sin IVA. Si el cliente es autónomo o empresa, explica el impacto real sin IVA (lo recupera) además del total con IVA.
 - Revisa con especial cuidado las páginas interiores y el detalle de cada factura: ahí suelen estar los descuentos con su fecha de fin, los prorrateos y los avisos de cambio de precio.
 - Si una subida se cobró antes de la fecha anunciada (por ejemplo, prorrateada en un mes anterior), señálalo en "cobros_a_revisar".
-- Normativa orientativa en España: la operadora debe avisar de los cambios de condiciones con al menos un mes de antelación, y ese cambio da derecho a resolver el contrato sin penalización (también a microempresas, salvo renuncia expresa). Ese derecho a irse sin penalización hay que ejercerlo cuando llega el aviso (antes de que se aplique el cambio o poco después); si ya ha pasado ese plazo, NO lo uses como argumento. Si el aviso se hizo en plazo, la subida no es reclamable: dilo con honestidad.
+- Normativa orientativa en España (contexto general, usa "base_legal" para la cita verificada si la hay): la operadora debe avisar de los cambios de condiciones con al menos un mes de antelación, y ese cambio da derecho a resolver el contrato sin penalización (también a microempresas, salvo renuncia expresa). Ese derecho a irse sin penalización hay que ejercerlo cuando llega el aviso (antes de que se aplique el cambio o poco después); si ya ha pasado ese plazo, NO lo uses como argumento. Si el aviso se hizo en plazo, la subida no es reclamable: dilo con honestidad.
 - Valoración: "solido" = hay base clara para reclamar; "depende" = falta un dato clave (por ejemplo, si hubo aviso); "dificil" = poco fundamento; "sin_caso" = no hay nada que reclamar (aunque quizá sí algo que negociar).
 - Sé honesto: si lo que más ahorra es negociar o cambiar de compañía y no reclamar, dilo así.
 - "impacto": calcula "factura_prevista_con_iva" con una cuenta, nunca a ojo: factura actual con IVA + (suma de los descuentos que caducan, sin IVA) × 1,21. Escribe la cuenta en "explicacion". "diferencia_anual_con_iva" = (prevista − actual) × 12. Si no hay datos para calcularlo, pon null.
@@ -113,6 +247,14 @@ async function analizar(sb: any, s: any) {
     const apiKey = Deno.env.get("ANTHROPIC_API_KEY");
     if (!apiKey) return await fallo("falta ANTHROPIC_API_KEY en los secretos de Supabase");
 
+    // Base legal verificada en vivo contra el BOE (si falla, seguimos sin ella)
+    let baseLegal = "";
+    try {
+      baseLegal = await obtenerBaseLegalVerificada();
+    } catch (e) {
+      console.error("[analisis] base legal BOE falló por completo:", (e as Error).message);
+    }
+
     // Descargar documentos
     const bloques: any[] = [];
     const omitidos: string[] = [];
@@ -143,7 +285,7 @@ async function analizar(sb: any, s: any) {
       body: JSON.stringify({
         model: MODELO,
         max_tokens: 8000,
-        messages: [{ role: "user", content: [...bloques, { type: "text", text: INSTRUCCIONES(s, hoyMadrid(), omitidos) }] }],
+        messages: [{ role: "user", content: [...bloques, { type: "text", text: INSTRUCCIONES(s, hoyMadrid(), omitidos, baseLegal) }] }],
       }),
     });
     if (!r.ok) {
@@ -206,6 +348,7 @@ function htmlAnalisis(s: any, a: any, omitidos: string[]) {
   ${sec("Permanencias", lista(a.permanencias, (x) => `${esc(x.concepto_o_linea)} · hasta ${esc(x.fecha_fin)} · ${esc(x.penalizacion)}`))}
   ${sec("Avisos encontrados en los documentos", lista(a.avisos_en_documentos, (x) => `${esc(x.fecha)}: «${esc(x.texto)}»`))}
   ${sec("Cobros a revisar", lista(a.cobros_a_revisar, (x) => `${esc(x.concepto)} (${esc(x.importe)}): ${esc(x.motivo)}`))}
+  ${sec("Base legal citada (verificada en vivo contra el BOE)", lista(a.base_legal, (x) => `<strong>${esc(x.norma)}</strong> — ${esc(x.articulo)}<br><span style="color:#55625D">«${esc(x.cita_literal)}»</span>`))}
   ${sec("Recomendación", `<p style="margin:0">${esc(a.recomendacion)}</p>`)}
   ${sec("Datos que faltan", lista(a.datos_que_faltan, (x) => esc(x)))}
   ${sec("Fechas para recordatorios", lista(a.fechas_recordatorio, (x) => `${esc(x.fecha)}: ${esc(x.motivo)}`))}
