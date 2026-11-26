@@ -34,6 +34,9 @@ header.top .wrap{display:flex;align-items:center;justify-content:space-between;g
 header nav{display:flex;align-items:center;gap:18px;flex-wrap:wrap}
 header nav a.plain{color:var(--ink2);text-decoration:none;font-size:15px}
 @media (max-width:560px){header nav a.plain{display:none}}
+@media (max-width:560px){
+  .nav-pregunta{display:inline-flex!important;align-items:center;justify-content:center;min-height:38px;padding:0 14px;border-radius:999px;border:1.5px solid var(--accent);color:var(--accent)!important;font-size:13px;font-weight:600}
+}
 
 /* hero */
 .hero{display:flex;flex-wrap:wrap;gap:44px;align-items:flex-start;padding-top:56px;padding-bottom:64px}
@@ -133,7 +136,7 @@ footer a{color:#C9D0CB}
     <nav aria-label="Secciones">
       <a class="plain" href="#como">Cómo funciona</a>
       <a class="plain" href="#precio">Precio</a>
-      <a class="plain" href="#pregunta">Hazme una pregunta</a>
+      <a class="plain nav-pregunta" href="#pregunta">Hazme una pregunta</a>
       <a class="btn" href="#analizar" style="min-height:44px;font-size:15px">Analizar mi factura</a>
     </nav>
   </div>
