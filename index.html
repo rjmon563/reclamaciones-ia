@@ -136,6 +136,7 @@ footer a{color:#C9D0CB}
     <nav aria-label="Secciones">
       <a class="plain" href="#como">Cómo funciona</a>
       <a class="plain" href="#precio">Precio</a>
+      <a class="plain" href="#guia">Guía gratis</a>
       <a class="plain nav-pregunta" href="#pregunta">Haz tu consulta</a>
       <a class="btn" href="#analizar" style="min-height:44px;font-size:15px">Analizar mi factura</a>
     </nav>
@@ -300,6 +301,38 @@ footer a{color:#C9D0CB}
       <div class="grid" style="grid-template-columns:repeat(auto-fit,minmax(280px,1fr))">
         <div class="price alt"><strong>Análisis de factura</strong><span class="display">Gratis</span><p>Te decimos qué ha cambiado, cuánto pagas de más y si hay caso. Si no lo hay, te lo decimos y no pagas nada.</p></div>
         <div class="price main"><span class="pill pill-warn" style="margin-bottom:6px">Gratis durante el lanzamiento</span><strong>Reclamación completa</strong><div style="display:flex;align-items:baseline;gap:8px;flex-wrap:wrap"><span class="display">Gratis</span><span style="color:#D5ECE6;text-decoration:line-through">9 €</span><span style="color:#D5ECE6">pago único por caso</span></div><p>Carta formal, informe, dónde presentarla, avisos de plazo y ayuda si la empresa te la rechaza. Sin cuotas ni comisión sobre lo que recuperes.</p></div>
+      </div>
+    </div>
+  </section>
+
+  <section class="band" id="guia">
+    <div class="wrap sec" style="max-width:640px">
+      <h2>Guía gratis: los 5 cobros que no te avisan</h2>
+      <p style="margin:-14px 0 0;color:var(--ink2);font-size:15px">Los 5 cobros más comunes que vemos al revisar facturas de móvil y fibra, y qué hacer en cada uno. Déjanos tu correo y te la mandamos.</p>
+
+      <form id="formGuia" class="card" novalidate style="padding:24px">
+        <label class="field">Tu correo
+          <input type="email" id="gEmail" autocomplete="email" placeholder="nombre@correo.com" required>
+        </label>
+
+        <label class="check">
+          <input type="checkbox" id="gAcepto" required>
+          <span>Acepto que uséis mi correo para enviarme esta guía y futuros avisos de Reclamaciones IA, según la <a href="aviso-legal.html" target="_blank" rel="noopener">política de privacidad</a>.</span>
+        </label>
+
+        <div class="trampa" aria-hidden="true"><label>No rellenes este campo <input type="text" id="gWeb" tabindex="-1" autocomplete="off"></label></div>
+
+        <p class="error" id="gError" role="alert" hidden></p>
+
+        <button class="btn" type="submit" id="gEnviar">Descargar guía gratis</button>
+        <p class="hint">Sin spam. Un correo cuando haya algo útil nuevo.</p>
+      </form>
+
+      <div class="ok card" id="gGracias" hidden tabindex="-1" style="padding:24px">
+        <span class="tag" style="align-self:flex-start">Lista</span>
+        <h2 style="font-size:1.5rem">¡Ya está! Aquí tienes tu guía.</h2>
+        <p>Pulsa el botón para descargarla. Guardamos <strong id="gEmailOk"></strong> para avisarte si sacamos contenido nuevo.</p>
+        <a class="btn" href="/guia-5-cobros-reclamacionesia.pdf" download style="align-self:flex-start">Descargar PDF</a>
       </div>
     </div>
   </section>
@@ -630,6 +663,42 @@ footer a{color:#C9D0CB}
 
   document.getElementById('pOtra').addEventListener('click', function () {
     formP.reset(); graciasP.hidden = true; formP.hidden = false;
+  });
+
+  var formG = document.getElementById('formGuia');
+  var errorG = document.getElementById('gError');
+  var btnG = document.getElementById('gEnviar');
+  var graciasG = document.getElementById('gGracias');
+
+  function mostrarErrorG(msg) { errorG.textContent = msg; errorG.hidden = !msg; }
+
+  formG.addEventListener('submit', async function (e) {
+    e.preventDefault();
+    mostrarErrorG('');
+    var email = document.getElementById('gEmail').value.trim();
+    if (!/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(email)) return mostrarErrorG('Revisa el correo electrónico.');
+    if (!document.getElementById('gAcepto').checked) return mostrarErrorG('Necesitamos tu permiso para enviarte la guía.');
+    if (document.getElementById('gWeb').value) { // campo trampa
+      document.getElementById('gEmailOk').textContent = email;
+      formG.hidden = true; graciasG.hidden = false; return;
+    }
+
+    btnG.disabled = true; btnG.textContent = 'Enviando…';
+    try {
+      var res = await fetch(SUPABASE_URL + '/rest/v1/reclamaciones_leads_guia', {
+        method: 'POST',
+        headers: { apikey: ANON_KEY, Authorization: 'Bearer ' + ANON_KEY, 'Content-Type': 'application/json', Prefer: 'return=minimal' },
+        body: JSON.stringify({ email: email, guia: 'los-5-cobros' })
+      });
+      if (!res.ok) throw new Error(await motivoError(res));
+
+      document.getElementById('gEmailOk').textContent = email;
+      formG.hidden = true; graciasG.hidden = false; graciasG.focus();
+    } catch (err) {
+      mostrarErrorG(err.message === 'limite' ? MSG_LIMITE : 'No hemos podido procesar tu correo. Comprueba la conexión e inténtalo de nuevo.');
+    } finally {
+      btnG.disabled = false; btnG.textContent = 'Descargar guía gratis';
+    }
   });
 })();
 </script>
