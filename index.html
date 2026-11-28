@@ -5,7 +5,6 @@
 <meta name="viewport" content="width=device-width, initial-scale=1">
 <title>Reclamaciones IA · ¿Te están cobrando de más?</title>
 <meta name="description" content="Sube tu factura de móvil o fibra y te decimos gratis si te están cobrando de más.">
-<meta name="robots" content="noindex">
 <link rel="preconnect" href="https://fonts.googleapis.com">
 <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
 <link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Bricolage+Grotesque:opsz,wght@12..96,600;12..96,700&family=Inter:wght@400;500;600&display=swap">
@@ -53,6 +52,7 @@ form{display:flex;flex-direction:column;gap:14px;padding:20px;max-width:540px}
 .drop:focus-within{outline:3px solid #9fd3c7;outline-offset:2px}
 .drop strong{font-size:15px}
 .drop small{font-size:13px;color:var(--muted)}
+.trampa{position:absolute;left:-10000px;width:1px;height:1px;overflow:hidden}
 .sr{position:absolute;width:1px;height:1px;overflow:hidden;clip:rect(0 0 0 0);white-space:nowrap}
 .files{list-style:none;margin:0;padding:0;display:flex;flex-direction:column;gap:6px}
 .files li{display:flex;align-items:center;justify-content:space-between;gap:10px;padding:8px 12px;border-radius:10px;background:var(--bg);font-size:14px}
@@ -126,7 +126,7 @@ footer{background:var(--ink);color:#C9D0CB}
 footer .wrap{display:flex;flex-wrap:wrap;justify-content:space-between;gap:14px;padding-top:32px;padding-bottom:32px;font-size:14px}
 footer a{color:#C9D0CB}
 </style>
-<script>function loadScript(a){var b=document.getElementsByTagName("head")[0],c=document.createElement("script");c.type="text/javascript",c.src="https://tracker.metricool.com/resources/be.js",c.onreadystatechange=a,c.onload=a,b.appendChild(c)}loadScript(function(){beTracker.t({hash:"5ddb235ea7ca9a82f32d4a75fc10b3f0"})});</script>
+<script src="cookies.js" defer></script>
 </head>
 <body>
 
@@ -153,7 +153,7 @@ footer a{color:#C9D0CB}
         <label class="drop" id="drop" for="archivos">
           <svg width="28" height="28" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M12 16V4M7 9l5-5 5 5"/><path d="M4 16v3a1 1 0 0 0 1 1h14a1 1 0 0 0 1-1v-3"/></svg>
           <strong>Sube tus facturas y otros documentos</strong>
-          <small>Facturas completas (la de antes de la subida y la actual), contrato, avisos de la compañía o capturas · PDF o fotos · hasta 10 archivos de 10 MB</small>
+          <small>Facturas completas (la de antes de la subida y la actual), contrato, avisos de la compañía o capturas · PDF o fotos · hasta 10 archivos (PDF de hasta 10 MB)</small>
           <input class="sr" id="archivos" type="file" multiple accept="image/*,application/pdf">
         </label>
         <ul class="files" id="lista" aria-live="polite"></ul>
@@ -206,13 +206,15 @@ footer a{color:#C9D0CB}
 
         <label class="check">
           <input type="checkbox" id="acepto" required>
-          <span>Acepto que usen mis facturas solo para analizar mi caso, según la <a href="#privacidad">política de privacidad</a>.</span>
+          <span>Acepto que usen mis facturas solo para analizar mi caso, según la <a href="aviso-legal.html" target="_blank" rel="noopener">política de privacidad</a>.</span>
         </label>
 
         <label class="check">
           <input type="checkbox" id="recordatorios">
           <span>Quiero que me aviséis antes de que caduquen mis descuentos o permanencias <span style="color:var(--muted)">(opcional, puedes darte de baja cuando quieras)</span>.</span>
         </label>
+
+        <div class="trampa" aria-hidden="true"><label>No rellenes este campo <input type="text" id="web" tabindex="-1" autocomplete="off"></label></div>
 
         <p class="error" id="error" role="alert" hidden></p>
 
@@ -253,17 +255,17 @@ footer a{color:#C9D0CB}
         <p>Al revisar tus facturas buscamos <strong>cada descuento y su fecha de fin</strong>, te decimos cuánto pagarás después y te avisamos con tiempo para negociar o cambiar de compañía.</p>
         <a class="btn" href="#analizar" style="align-self:flex-start">Revisar mis descuentos</a>
       </div>
-      <div class="alerta-card card" role="img" aria-label="Ejemplo: factura de 55 euros que pasa a 107 euros en diciembre al caducar tres descuentos">
+      <div class="alerta-card card" role="img" aria-label="Ejemplo: factura de 55 euros que pasa a 107 euros al caducar tres descuentos">
         <span style="font-size:13px;color:var(--muted)">Ejemplo real (nuestra propia factura, datos anonimizados)</span>
         <div class="salto">
           <div><small>Ahora</small><span class="display">55 €</span></div>
           <svg width="28" height="28" viewBox="0 0 24 24" fill="none" stroke="#9A3412" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M5 12h14M13 6l6 6-6 6"/></svg>
-          <div><small>Desde diciembre</small><span class="display" style="color:var(--warn)">107 €</span></div>
+          <div><small>Cuando caducan</small><span class="display" style="color:var(--warn)">107 €</span></div>
         </div>
         <ul class="caducan">
-          <li><span>Descuento del 30 % del pack</span><b>caduca 02/12</b></li>
-          <li><span>3 € en cada línea móvil</span><b>caduca 28/11</b></li>
-          <li><span>Descuento línea adicional</span><b>caduca 28/11</b></li>
+          <li><span>Descuento del 30 % del pack</span><b>caduca en 3 semanas</b></li>
+          <li><span>3 € en cada línea móvil</span><b>caduca en 2 semanas</b></li>
+          <li><span>Descuento línea adicional</span><b>caduca en 2 semanas</b></li>
         </ul>
         <div class="row" style="background:var(--warn-bg)">Te costaría <span class="tag" style="background:#FDEEE3;color:var(--warn)">+627 € al año</span></div>
       </div>
@@ -322,8 +324,10 @@ footer a{color:#C9D0CB}
 
         <label class="check">
           <input type="checkbox" id="pAcepto" required>
-          <span>Acepto que uséis mi mensaje solo para responderme, según la <a href="#privacidad">política de privacidad</a>.</span>
+          <span>Acepto que uséis mi mensaje solo para responderme, según la <a href="aviso-legal.html" target="_blank" rel="noopener">política de privacidad</a>.</span>
         </label>
+
+        <div class="trampa" aria-hidden="true"><label>No rellenes este campo <input type="text" id="pWeb" tabindex="-1" autocomplete="off"></label></div>
 
         <p class="error" id="pError" role="alert" hidden></p>
 
@@ -343,7 +347,7 @@ footer a{color:#C9D0CB}
   <div class="wrap sec" style="max-width:820px">
     <h2>Preguntas frecuentes</h2>
     <div class="card faq"><h3>¿Es asesoramiento jurídico?</h3><p>No. Te damos información y documentos para que reclames tú mismo, de forma ordenada. No prometemos resultados: te decimos con honestidad si tu caso es sólido, dudoso o difícil.</p></div>
-    <div class="card faq" id="privacidad"><h3>¿Qué hacéis con mis facturas?</h3><p>Solo las usamos para analizar tu caso. Se guardan en un almacén privado, no las compartimos con nadie y puedes pedir que las borremos cuando quieras escribiendo a contacto@reclamacionesia.es.</p></div>
+    <div class="card faq" id="privacidad"><h3>¿Qué hacéis con mis facturas?</h3><p>Solo las usamos para analizar tu caso. Se guardan en un almacén privado y no las vendemos ni las cedemos a nadie; solo las tratan los proveedores técnicos que necesitamos para prestar el servicio (almacenamiento, correo e inteligencia artificial), como se explica en el <a href="aviso-legal.html">aviso legal</a>. Puedes pedir que las borremos cuando quieras escribiendo a contacto@reclamacionesia.es.</p></div>
     <div class="card faq"><h3>¿Con qué compañías funciona?</h3><p>Con cualquier operadora de móvil, fibra o telefonía fija en España. Pronto también luz y gas.</p></div>
   </div>
 </main>
@@ -356,7 +360,8 @@ footer a{color:#C9D0CB}
     </div>
     <div style="font-size:13px;color:#A9B8B2">
       Antonio Chacón Horrillo (autónomo) · NIF 46049399H ·
-      <a href="aviso-legal.html" style="color:#A9B8B2;text-decoration:underline">Aviso legal y protección de datos</a>
+      <a href="aviso-legal.html" style="color:#A9B8B2;text-decoration:underline">Aviso legal y protección de datos</a> ·
+      <a href="#" data-cookies style="color:#A9B8B2;text-decoration:underline">Configurar cookies</a>
     </div>
     <div style="font-size:13px;color:#A9B8B2;display:flex;gap:14px;flex-wrap:wrap">
       <span>Síguenos:</span>
@@ -409,16 +414,74 @@ footer a{color:#C9D0CB}
     });
   }
 
-  function anadir(fileList) {
-    mostrarError('');
-    for (var i = 0; i < fileList.length; i++) {
-      var f = fileList[i];
-      if (archivos.length >= MAX_FILES) { mostrarError('Puedes subir como máximo ' + MAX_FILES + ' archivos.'); break; }
-      if (TIPOS.indexOf(tipoDe(f)) === -1) { mostrarError('«' + f.name + '» no es una foto ni un PDF.'); continue; }
-      if (f.size > MAX_SIZE) { mostrarError('«' + f.name + '» pesa más de 10 MB.'); continue; }
-      archivos.push(f);
+  // Las fotos se pasan a JPEG y se reducen antes de subirlas: la IA no lee HEIC
+  // (fotos de iPhone) y rechaza imágenes de más de ~5 MB.
+  var MAX_LADO = 2400, MAX_FOTO = 3.5 * 1024 * 1024, MAX_FOTO_ORIGINAL = 30 * 1024 * 1024;
+  var procesando = 0;
+
+  function cargarImagen(f) {
+    return new Promise(function (ok, ko) {
+      var url = URL.createObjectURL(f);
+      var img = new Image();
+      img.onload = function () { URL.revokeObjectURL(url); ok(img); };
+      img.onerror = function () { URL.revokeObjectURL(url); ko(new Error('decode')); };
+      img.src = url;
+    });
+  }
+
+  function aJpeg(img, calidad) {
+    var w = img.naturalWidth, h = img.naturalHeight;
+    var escala = Math.min(1, MAX_LADO / Math.max(w, h));
+    var c = document.createElement('canvas');
+    c.width = Math.round(w * escala); c.height = Math.round(h * escala);
+    var ctx = c.getContext('2d');
+    ctx.fillStyle = '#fff'; ctx.fillRect(0, 0, c.width, c.height);
+    ctx.drawImage(img, 0, 0, c.width, c.height);
+    return new Promise(function (ok) { c.toBlob(ok, 'image/jpeg', calidad); });
+  }
+
+  async function prepararFoto(f) {
+    var tipo = tipoDe(f);
+    var esHeic = tipo === 'image/heic' || tipo === 'image/heif';
+    var img;
+    try { img = await cargarImagen(f); }
+    catch (e) {
+      if (esHeic) throw new Error('«' + f.name + '» es una foto HEIC de iPhone que este navegador no puede abrir. Haz una captura de pantalla de la factura y súbela, o en el iPhone ve a Ajustes › Cámara › Formatos › «Más compatible».');
+      throw new Error('No hemos podido abrir la foto «' + f.name + '».');
     }
-    pintar();
+    var grande = Math.max(img.naturalWidth, img.naturalHeight) > MAX_LADO;
+    if (!esHeic && !grande && f.size <= MAX_FOTO) return f;
+    var blob = await aJpeg(img, 0.85);
+    if (blob && blob.size > MAX_FOTO) blob = await aJpeg(img, 0.7);
+    if (!blob) throw new Error('No hemos podido preparar la foto «' + f.name + '».');
+    var nombre = f.name.replace(/\.[^.]+$/, '') + '.jpg';
+    return new File([blob], nombre, { type: 'image/jpeg' });
+  }
+
+  async function anadir(fileList) {
+    mostrarError('');
+    var nuevos = Array.prototype.slice.call(fileList);
+    procesando++;
+    btn.disabled = true; btn.textContent = 'Preparando fotos…';
+    try {
+      for (var i = 0; i < nuevos.length; i++) {
+        var f = nuevos[i];
+        if (archivos.length >= MAX_FILES) { mostrarError('Puedes subir como máximo ' + MAX_FILES + ' archivos.'); break; }
+        var tipo = tipoDe(f);
+        if (TIPOS.indexOf(tipo) === -1) { mostrarError('«' + f.name + '» no es una foto ni un PDF.'); continue; }
+        if (tipo === 'application/pdf') {
+          if (f.size > MAX_SIZE) { mostrarError('«' + f.name + '» pesa más de 10 MB.'); continue; }
+          archivos.push(f); pintar(); continue;
+        }
+        if (f.size > MAX_FOTO_ORIGINAL) { mostrarError('«' + f.name + '» pesa demasiado.'); continue; }
+        try { archivos.push(await prepararFoto(f)); pintar(); }
+        catch (err) { mostrarError(err.message); }
+      }
+    } finally {
+      procesando--;
+      if (!procesando) { btn.disabled = false; btn.textContent = 'Analizar gratis'; }
+      pintar();
+    }
   }
 
   input.addEventListener('change', function () { anadir(input.files); input.value = ''; });
@@ -437,6 +500,13 @@ footer a{color:#C9D0CB}
     });
   }
 
+  var MSG_LIMITE = 'Hemos recibido varios envíos seguidos desde este correo. Espera un rato o escríbenos a contacto@reclamacionesia.es.';
+  // La base de datos rechaza envíos en exceso con el mensaje "limite_envios"
+  async function motivoError(res) {
+    try { var j = await res.json(); if (j && /limite_envios/.test(j.message || '')) return 'limite'; } catch (e) {}
+    return 'registro';
+  }
+
   function nombreSeguro(n) {
     return n.normalize('NFD').replace(/[̀-ͯ]/g, '').replace(/[^a-zA-Z0-9._-]+/g, '_').slice(-80);
   }
@@ -451,11 +521,16 @@ footer a{color:#C9D0CB}
     var operadora = document.getElementById('operadora').value;
     var fechaAviso = document.getElementById('fechaAviso').value.trim();
     var nombre = document.getElementById('nombre').value.trim();
+    if (procesando) return mostrarError('Espera un momento, estamos preparando tus fotos.');
     if (!archivos.length) return mostrarError('Sube al menos una factura.');
     if (!tipoSel) return mostrarError('Indica si reclamas como particular, autónomo o empresa.');
     if (!avisoSel) return mostrarError('Dinos si te avisaron del cambio (si no lo sabes, marca «No lo sé»).');
     if (!/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(email)) return mostrarError('Revisa el correo electrónico.');
     if (!document.getElementById('acepto').checked) return mostrarError('Necesitamos tu permiso para analizar las facturas.');
+    if (document.getElementById('web').value) { // campo trampa: solo lo rellenan los bots
+      document.getElementById('emailOk').textContent = email;
+      form.hidden = true; gracias.hidden = false; return;
+    }
 
     btn.disabled = true; btn.textContent = 'Enviando…';
     var id = uuid();
@@ -484,12 +559,12 @@ footer a{color:#C9D0CB}
           acepta_recordatorios: document.getElementById('recordatorios').checked
         })
       });
-      if (!res.ok) throw new Error('registro');
+      if (!res.ok) throw new Error(await motivoError(res));
 
       document.getElementById('emailOk').textContent = email;
       form.hidden = true; gracias.hidden = false; gracias.focus();
     } catch (err) {
-      mostrarError('No hemos podido enviar tus facturas. Comprueba la conexión e inténtalo de nuevo.');
+      mostrarError(err.message === 'limite' ? MSG_LIMITE : 'No hemos podido enviar tus facturas. Comprueba la conexión e inténtalo de nuevo.');
     } finally {
       btn.disabled = false; btn.textContent = 'Analizar gratis';
     }
@@ -522,6 +597,10 @@ footer a{color:#C9D0CB}
     if (!/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(email)) return mostrarErrorP('Revisa el correo electrónico.');
     if (mensaje.length < 10) return mostrarErrorP('Cuéntanos un poco más de qué te ha pasado.');
     if (!document.getElementById('pAcepto').checked) return mostrarErrorP('Necesitamos tu permiso para usar el mensaje.');
+    if (document.getElementById('pWeb').value) { // campo trampa
+      document.getElementById('pEmailOk').textContent = email;
+      formP.hidden = true; graciasP.hidden = false; return;
+    }
 
     btnP.disabled = true; btnP.textContent = 'Enviando…';
     var id = uuid();
@@ -531,7 +610,7 @@ footer a{color:#C9D0CB}
         headers: { apikey: ANON_KEY, Authorization: 'Bearer ' + ANON_KEY, 'Content-Type': 'application/json', Prefer: 'return=minimal' },
         body: JSON.stringify({ id: id, email: email, nombre: nombre || null, mensaje: mensaje })
       });
-      if (!res.ok) throw new Error('registro');
+      if (!res.ok) throw new Error(await motivoError(res));
 
       // Dispara la respuesta en segundo plano; no bloquea el "gracias" si tarda.
       fetch(SUPABASE_URL + '/functions/v1/reclamaciones-consulta', {
@@ -543,9 +622,9 @@ footer a{color:#C9D0CB}
       document.getElementById('pEmailOk').textContent = email;
       formP.hidden = true; graciasP.hidden = false; graciasP.focus();
     } catch (err) {
-      mostrarErrorP('No hemos podido enviar tu pregunta. Comprueba la conexión e inténtalo de nuevo.');
+      mostrarErrorP(err.message === 'limite' ? MSG_LIMITE : 'No hemos podido enviar tu consulta. Comprueba la conexión e inténtalo de nuevo.');
     } finally {
-      btnP.disabled = false; btnP.textContent = 'Enviar mi pregunta';
+      btnP.disabled = false; btnP.textContent = 'Enviar mi consulta';
     }
   });
 
