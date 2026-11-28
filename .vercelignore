@@ -1,0 +1,6 @@
+# Solo se publica la web (index.html, aviso-legal.html, cookies.js).
+# Los vídeos de redes y las funciones de Supabase no van a Vercel.
+media
+social
+supabase
+README.md
